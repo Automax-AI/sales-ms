@@ -1,0 +1,94 @@
+name: Azure CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/azure-*.yml'
+      - 'infra/**'
+      - 'packages/twenty-apps/internal/automax-sales/**'
+      - 'packages/twenty-docker/**'
+      - 'scripts/azure/**'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/azure-*.yml'
+      - 'infra/**'
+      - 'packages/twenty-apps/internal/automax-sales/**'
+      - 'packages/twenty-docker/**'
+      - 'scripts/azure/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  automax-app:
+    name: Automax app
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: packages/twenty-apps/internal/automax-sales
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: packages/twenty-apps/internal/automax-sales/.nvmrc
+          cache: yarn
+          cache-dependency-path: packages/twenty-apps/internal/automax-sales/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Unit tests
+        run: yarn test
+
+  infrastructure:
+    name: Bicep and shell validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Build Bicep
+        run: az bicep build --file infra/main.bicep --stdout >/dev/null
+
+      - name: Lint Bicep
+        run: az bicep lint --file infra/main.bicep
+
+      - name: Validate shell scripts
+        run: bash -n scripts/azure/*.sh
+
+  container-image:
+    name: Production container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Build production image
+        run: >
+          docker build
+          --target twenty
+          --file packages/twenty-docker/twenty/Dockerfile
+          --tag automax-sales-ci:${{ github.sha }}
+          .

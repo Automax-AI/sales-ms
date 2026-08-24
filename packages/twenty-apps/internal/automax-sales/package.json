@@ -1,0 +1,32 @@
+{
+  "name": "automax-sales",
+  "version": "0.1.1",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "^24.5.0",
+    "npm": "please-use-yarn",
+    "yarn": ">=4.0.2",
+    "twenty": ">=2.19.0"
+  },
+  "packageManager": "yarn@4.13.0",
+  "scripts": {
+    "twenty": "twenty",
+    "lint": "oxlint -c .oxlintrc.json .",
+    "lint:fix": "oxlint --fix -c .oxlintrc.json .",
+    "seed": "tsx src/scripts/seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "dotenv": "^17.2.3",
+    "oxlint": "^0.16.0",
+    "tsx": "^4.17.0",
+    "twenty-client-sdk": "2.23.0-alpha.2",
+    "twenty-sdk": "2.23.0-alpha.2",
+    "typescript": "^5.9.3",
+    "vite-tsconfig-paths": "^4.2.1",
+    "vitest": "^4.0.0"
+  }
+}

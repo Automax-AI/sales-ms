@@ -501,3 +501,5 @@ const main = () => {
   moduleIndexFiles.forEach(createTypeScriptFile);
 };
 main();
+// @prettier/sync can keep worker handles open under Nx after all writes finish.
+process.exit(0);
